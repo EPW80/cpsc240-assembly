@@ -1,0 +1,18 @@
+# Object files
+*.o
+
+# Linker / binary outputs
+addition
+subtraction
+hello
+
+# Listings / debug
+*.lst
+*.map
+
+# Core dumps
+core
+
+# Editor / OS
+.DS_Store
+*.swp
