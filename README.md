@@ -1,6 +1,6 @@
-# CPSC 240 Assembly Arithmetic Exercises
+# CPSC 240 Assembly Programming Exercises
 
-Concise reference for two x86-64 NASM programs translating small C/C++ arithmetic snippets into assembly and verifying results with GDB.
+Collection of x86-64 NASM programs translating C/C++ arithmetic and conditional logic into assembly and verifying results with GDB.
 
 ## Files
 - `addition.asm`  Implements:
@@ -19,6 +19,17 @@ Concise reference for two x86-64 NASM programs translating small C/C++ arithmeti
   dif = num1 - num2;           // 4660 - (-292) = 4952 (0x1358)
   ```
   Uses native 16-bit signed subtraction.
+- `leap.asm` Implements leap year calculation with conditional logic:
+  ```c
+  unsigned short year = 2025;
+  unsigned short yLeap = 0, nLeap = 0;
+  if((year%400 == 0) || ((year%4 == 0) && (year%100 != 0))) {
+      yLeap++;
+  } else {
+      nLeap++;
+  }
+  ```
+  Uses 16-bit variables with modulo operations and if-else branching.
 
 ## Build
 Assemble and link with NASM + LD:
@@ -28,16 +39,22 @@ ld addition.o -o addition
 
 nasm -f elf64 -g subtraction.asm -o subtraction.o
 ld subtraction.o -o subtraction
+
+nasm -f elf64 leap.asm -o leap.o
+ld leap.o -o leap
 ```
 
 ## Run
 ```bash
 ./addition
 ./subtraction
+./leap
 ```
 (Programs terminate immediately via `sys_exit`; use GDB to inspect results.)
 
-## GDB Verification (Example)
+## GDB Verification Examples
+
+### Addition Program
 ```bash
 gdb ./addition
 (gdb) break _start
@@ -48,7 +65,8 @@ gdb ./addition
 (gdb) stepi  # add eax, ebx
 (gdb) x/1wx &sum   # expect 0x00011110
 ```
-Subtraction session key points:
+
+### Subtraction Program
 ```bash
 gdb ./subtraction
 (gdb) break _start
@@ -58,13 +76,32 @@ gdb ./subtraction
 (gdb) x/1hx &dif   # expect 0x1358
 ```
 
+### Leap Year Program
+```bash
+gdb ./leap
+(gdb) break end_if
+(gdb) run
+(gdb) x/1xh &year    # expect 0x07e9 (2025)
+(gdb) x/1xh &yLeap   # expect 0x0000 (0)
+(gdb) x/1xh &nLeap   # expect 0x0001 (1)
+(gdb) print/d *(unsigned short*)&year
+(gdb) print/d *(unsigned short*)&yLeap
+(gdb) print/d *(unsigned short*)&nLeap
+```
+
 ## Manual Result Checks
-Addition:
+
+### Addition:
 - 0xFEDC (65244) + 0x1234 (4660) = 0x11110 = 69904 (needs 17 bits → use 32-bit sum)
 
-Subtraction:
+### Subtraction:
 - num2 = -292 → 65536 - 292 = 65244 = 0xFEDC
 - 4660 - (-292) = 4660 + 292 = 4952 = 0x1358
+
+### Leap Year (2025):
+- 2025 % 400 = 25 (not 0)
+- 2025 % 4 = 1 (not 0, so NOT a leap year)
+- Result: yLeap = 0, nLeap = 1
 
 ## Notes
 - `movzx` ensures correct zero-extension for unsigned operands before 32-bit add.
