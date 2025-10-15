@@ -30,6 +30,26 @@ Collection of x86-64 NASM programs translating C/C++ arithmetic and conditional 
   }
   ```
   Uses 16-bit variables with modulo operations and if-else branching.
+- `parity.asm` Implements string case conversion with do-while loop:
+  ```c
+  char flexStr[30] = "Welcome to Ubuntu 22.04.6 LTS";
+  char toUpper[30], toLower[30];
+  register long rsi = 0, rcx = 30;
+  do {
+      if(flexStr[rsi] >= 'A' && flexStr[rsi] <= 'Z') {
+          toUpper[rsi] = flexStr[rsi];
+          toLower[rsi] = flexStr[rsi] + 0x20;
+      } else if(flexStr[rsi] >= 'a' && flexStr[rsi] <= 'z') {
+          toUpper[rsi] = flexStr[rsi] - 0x20;
+          toLower[rsi] = flexStr[rsi];
+      } else {
+          toUpper[rsi] = flexStr[rsi];
+          toLower[rsi] = flexStr[rsi];
+      }
+      rsi++; rcx--;
+  } while(rcx != 0);
+  ```
+  Uses 8-bit character arrays and 64-bit registers for loop control.
 
 ## Build
 Assemble and link with NASM + LD:
@@ -42,6 +62,9 @@ ld subtraction.o -o subtraction
 
 nasm -f elf64 leap.asm -o leap.o
 ld leap.o -o leap
+
+nasm -f elf64 parity.asm -o parity.o
+ld parity.o -o parity
 ```
 
 ## Run
@@ -49,6 +72,7 @@ ld leap.o -o leap
 ./addition
 ./subtraction
 ./leap
+./parity
 ```
 (Programs terminate immediately via `sys_exit`; use GDB to inspect results.)
 
@@ -87,6 +111,19 @@ gdb ./leap
 (gdb) print/d *(unsigned short*)&year
 (gdb) print/d *(unsigned short*)&yLeap
 (gdb) print/d *(unsigned short*)&nLeap
+```
+
+### Parity/String Conversion Program
+```bash
+gdb ./parity
+(gdb) break loop_increment
+(gdb) run
+(gdb) x/s 0x402000    # flexStr: "Welcome to Ubuntu 22.04.6 LTS"
+(gdb) x/s 0x40201e    # toUpper: "WELCOME TO UBUNTU 22.04.6 LTS"
+(gdb) x/s 0x40203c    # toLower: "welcome to ubuntu 22.04.6 lts"
+(gdb) x/30cb 0x402000  # Show original characters with ASCII values
+(gdb) x/30cb 0x40201e  # Show uppercase conversion
+(gdb) x/30cb 0x40203c  # Show lowercase conversion
 ```
 
 ## Manual Result Checks
