@@ -50,6 +50,41 @@ Collection of x86-64 NASM programs translating C/C++ arithmetic and conditional 
   } while(rcx != 0);
   ```
   Uses 8-bit character arrays and 64-bit registers for loop control.
+- `print.asm` Implements summation calculation and display:
+  ```c
+  char str1[] = "1+2+3+...+99=";
+  short sum = 0;
+  char ascii[5] = "0000\n";
+  register short cx = 1;
+  for(cx=1; cx<=99; cx++)
+      sum += cx;
+  ascii = itoa(sum);
+  cout << str1 << ascii;
+  ```
+  Uses 16-bit arithmetic with for loop, ASCII conversion via division by 10.
+- `input.asm` Implements array-based input processing with dual loops:
+  ```c
+  char num, buffer;
+  char ascii[10];
+  char mesg[] = "Input a number (1~9): ";
+  char multiple[] = " is multiple of 3\n";
+  register int r10 = 0;
+  do {
+      cout << "Input a number (1~9): ";
+      cin >> buffer;
+      ascii[r10] = buffer;
+      r10++;
+  } while(r10 < 9);
+  r10 = 0;
+  do {
+      num = atoi(ascii[r10]);
+      if(num%3 == 0) {
+          cout << num << " is multiple of 3\n";
+      }
+      r10++;
+  } while(r10 < 9);
+  ```
+  Uses two-loop structure: first collects 9 inputs into array, second processes stored values.
 
 ## Build
 Assemble and link with NASM + LD:
@@ -65,6 +100,12 @@ ld leap.o -o leap
 
 nasm -f elf64 parity.asm -o parity.o
 ld parity.o -o parity
+
+nasm -f elf64 print.asm -o print.o
+ld print.o -o print
+
+nasm -f elf64 input.asm -o input.o
+ld input.o -o input
 ```
 
 ## Run
@@ -73,8 +114,10 @@ ld parity.o -o parity
 ./subtraction
 ./leap
 ./parity
+./print        # Displays: 1+2+3+...+99=4950
+./input        # Interactive: prompts for 9 numbers, displays multiples of 3
 ```
-(Programs terminate immediately via `sys_exit`; use GDB to inspect results.)
+(Most programs terminate immediately via `sys_exit`; use GDB to inspect results.)
 
 ## GDB Verification Examples
 
@@ -126,6 +169,34 @@ gdb ./parity
 (gdb) x/30cb 0x40203c  # Show lowercase conversion
 ```
 
+### Print Summation Program
+```bash
+gdb ./print
+(gdb) break loop_add
+(gdb) break convert_loop
+(gdb) run
+(gdb) continue  # At cx=1
+(gdb) x/1hd &sum        # sum after first iteration
+(gdb) continue  # Continue through loop
+# At end of loop:
+(gdb) x/1hd &sum        # expect 4950 (sum of 1+2+...+99)
+(gdb) continue  # At ASCII conversion
+(gdb) x/5cb &ascii      # expect "4950\n"
+```
+
+### Input Array Processing Program
+```bash
+gdb ./input
+(gdb) break next2
+(gdb) run
+# Input 9 numbers when prompted: 3 1 2 4 5 6 7 8 9
+(gdb) x/9cb &ascii      # View all stored inputs
+(gdb) continue          # Process first value
+(gdb) print/d $r10      # Current index
+(gdb) print/d $ah       # Remainder after div by 3 (0 = multiple)
+# Continue through all 9 iterations to see which output
+```
+
 ## Manual Result Checks
 
 ### Addition:
@@ -139,6 +210,15 @@ gdb ./parity
 - 2025 % 400 = 25 (not 0)
 - 2025 % 4 = 1 (not 0, so NOT a leap year)
 - Result: yLeap = 0, nLeap = 1
+
+### Print (Sum 1+2+...+99):
+- Formula: n(n+1)/2 = 99(100)/2 = 4950
+- Result: "1+2+3+...+99=4950"
+
+### Input (Multiples of 3):
+- Input: 3,1,2,4,5,6,7,8,9
+- Multiples of 3: 3, 6, 9
+- Output: "3 is multiple of 3", "6 is multiple of 3", "9 is multiple of 3"
 
 ## Notes
 - `movzx` ensures correct zero-extension for unsigned operands before 32-bit add.
