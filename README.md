@@ -85,6 +85,34 @@ Collection of x86-64 NASM programs translating C/C++ arithmetic and conditional 
   } while(r10 < 9);
   ```
   Uses two-loop structure: first collects 9 inputs into array, second processes stored values.
+- `macro.asm` Implements sum calculator with macros:
+  ```c
+  #macro print(addr, n)  // expands to sys_write syscall
+  #macro scan(addr, n)   // expands to sys_read syscall
+  
+  char buffer[4];
+  short n, sumN;
+  char ascii[10];
+  char msg1[] = "Input a number (100~140): ";
+  char msg2[] = "1 + 2 + 3 +...+ N = ";
+  
+  print(msg1, 26);
+  scan(buffer, 4);
+  
+  // Inline atoi: convert ASCII to integer using multiplication by 10
+  n = atoi(buffer);
+  
+  // Calculate sum 1+2+3+...+n
+  for(cx=0; cx<=n; cx++)
+      sumN += cx;
+  
+  // Inline itoa: stack-based successive division by 10
+  ascii = itoa(sumN);
+  
+  print(msg2, 20);
+  print(ascii, 5);
+  ```
+  Uses macros for I/O, inline atoi/itoa conversions, word-sized variables.
 
 ## Build
 Assemble and link with NASM + LD:
@@ -106,6 +134,9 @@ ld print.o -o print
 
 nasm -f elf64 input.asm -o input.o
 ld input.o -o input
+
+nasm -f elf64 macro.asm -o macro.o
+ld macro.o -o macro
 ```
 
 ## Run
@@ -116,6 +147,7 @@ ld input.o -o input
 ./parity
 ./print        # Displays: 1+2+3+...+99=4950
 ./input        # Interactive: prompts for 9 numbers, displays multiples of 3
+./macro        # Interactive: prompts for number (100-140), displays sum
 ```
 (Most programs terminate immediately via `sys_exit`; use GDB to inspect results.)
 
@@ -219,6 +251,13 @@ gdb ./input
 - Input: 3,1,2,4,5,6,7,8,9
 - Multiples of 3: 3, 6, 9
 - Output: "3 is multiple of 3", "6 is multiple of 3", "9 is multiple of 3"
+
+### Macro (Sum 1+2+...+N):
+- Input: 100 → Output: 5050 (formula: n(n+1)/2)
+- Input: 120 → Output: 7260
+- Input: 140 → Output: 9870
+- Macros expand: `print msg1, 26` → 5 syscall instructions
+- Inline conversions eliminate function call overhead
 
 ## Notes
 - `movzx` ensures correct zero-extension for unsigned operands before 32-bit add.
