@@ -1,0 +1,18 @@
+Simulation Sample:
+
+erikwilliams@EPWPC:~/dev/cpsc240assignments$ ./macro
+Input a number (100~140): 5
+1 + 2 + 3 +...+ 5 = 15
+erikwilliams@EPWPC:~/dev/cpsc240assignments$ ./macro
+Input a number (100~140): 99
+1 + 2 + 3 +...+ 99 = 4950
+erikwilliams@EPWPC:~/dev/cpsc240assignments$ ./macro
+Input a number (100~140): 100
+1 + 2 + 3 +...+ 100 = 5050
+erikwilliams@EPWPC:~/dev/cpsc240assignments$ ./macro
+Input a number (100~140): 255
+1 + 2 + 3 +...+ 255 = 32640
+erikwilliams@EPWPC:~/dev/cpsc240assignments$ ./macro
+Input a number (100~140): 999
+1 + 2 + 3 +...+ 999 = 499500
+erikwilliams@EPWPC:~/dev/cpsc240assignments$
